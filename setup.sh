@@ -14,8 +14,8 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 CLAB_VERSION="0.74.3"
-IOL_IMAGE="vrnetlab/cisco_iol:17.16.01a"
-IOL_L2_IMAGE="vrnetlab/cisco_iol:L2-17.16.01a"
+L3_IMAGE="anc/iol-l3"
+L2_IMAGE="anc/iol-l2"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 log()    { echo -e "${GREEN}[+]${NC} $*"; }
@@ -137,82 +137,63 @@ check_images() {
     L3_OK=false
     L2_OK=false
 
-    $DOCKER_CMD image inspect "$IOL_IMAGE" &>/dev/null 2>&1    && L3_OK=true
-    $DOCKER_CMD image inspect "$IOL_L2_IMAGE" &>/dev/null 2>&1 && L2_OK=true
+    $DOCKER_CMD image inspect "$L3_IMAGE" &>/dev/null 2>&1 && L3_OK=true
+    $DOCKER_CMD image inspect "$L2_IMAGE" &>/dev/null 2>&1 && L2_OK=true
 
     if $L3_OK && $L2_OK; then
-        log "IOL images found — ready to deploy"
+        log "IOL images found: $L3_IMAGE, $L2_IMAGE"
         return 0
     fi
 
-    warn "One or more IOL images are missing:"
-    $L3_OK || echo "    Missing: $IOL_IMAGE  (L3 router)"
-    $L2_OK || echo "    Missing: $IOL_L2_IMAGE  (L2 switch)"
-
-    build_images
+    warn "One or more IOL images are missing. Attempting to load from tarballs..."
+    load_images
 }
 
-build_images() {
-    header "Building IOL Docker images..."
+load_images() {
+    L3_TAR="$SCRIPT_DIR/images/iol-l3.tar"
+    L2_TAR="$SCRIPT_DIR/images/iol-l2.tar"
 
-    # Locate binaries in ./bin/
-    L3_BIN=$(find "$SCRIPT_DIR/bin" -maxdepth 1 -type f \( -name "*.bin" -o -name "*.image" \) ! -name "*l2*" ! -name "*L2*" 2>/dev/null | head -1)
-    L2_BIN=$(find "$SCRIPT_DIR/bin" -maxdepth 1 -type f \( -name "*l2*" -o -name "*L2*" \) 2>/dev/null | head -1)
-
-    if [ -z "$L3_BIN" ] || [ -z "$L2_BIN" ]; then
+    if [ ! -f "$L3_TAR" ] || [ ! -f "$L2_TAR" ]; then
         echo ""
-        error "IOL binary files not found in ./bin/"
+        error "Docker image tarballs not found in ./images/"
         echo ""
-        echo "  This lab requires Cisco IOL (IOS on Linux) images."
-        echo "  These are proprietary Cisco binaries and cannot be bundled with this kit."
+        echo "  This lab requires pre-built Cisco IOL Docker images."
+        echo "  These are provided as .tar files and must be downloaded separately."
         echo ""
         echo "  ── How to obtain them ──────────────────────────────────────────────────"
-        echo "  Your institution may provide these through its Cisco licensing agreement."
-        echo "  Contact your lab administrator or lecturer for access."
+        echo "  Download 'iol-l3.tar' and 'iol-l2.tar' from the link provided by"
+        echo "  your lab administrator or lecturer."
         echo ""
-        echo "  Once you have the files, place them in the bin/ folder like this:"
+        echo "  Place the files in the images/ folder like this:"
         echo ""
-        echo "    bin/"
-        echo "    ├── iol.bin        ← L3 router image  (IOS on Linux, not L2)"
-        echo "    └── iol_l2.bin     ← L2 switch image  (filename must contain 'l2')"
+        echo "    images/"
+        echo "    ├── iol-l3.tar     ← L3 router image"
+        echo "    └── iol-l2.tar     ← L2 switch image"
         echo ""
         echo "  Then re-run: bash setup.sh"
         echo ""
         exit 1
     fi
 
-    log "Found L3 binary: $(basename "$L3_BIN")"
-    log "Found L2 binary: $(basename "$L2_BIN")"
-
-    # Clone vrnetlab if needed
-    VRNETLAB_DIR="$SCRIPT_DIR/.vrnetlab"
-    if [ ! -d "$VRNETLAB_DIR" ]; then
-        log "Cloning vrnetlab..."
-        git clone --depth 1 https://github.com/vrnetlab/vrnetlab.git "$VRNETLAB_DIR"
-    fi
-
-    IOL_BUILD_DIR="$VRNETLAB_DIR/cisco/iol"
-
+    log "Found image tarballs. Loading into Docker..."
     if ! $L3_OK; then
-        log "Building L3 router image (this takes a few minutes)..."
-        cp "$L3_BIN" "$IOL_BUILD_DIR/iol.bin"
-        $DOCKER_CMD build \
-            --build-arg IMAGE=iol.bin \
-            -t "$IOL_IMAGE" \
-            "$IOL_BUILD_DIR"
-        rm -f "$IOL_BUILD_DIR/iol.bin"
-        log "L3 image built: $IOL_IMAGE"
+        log "Loading L3 image from $(basename "$L3_TAR")..."
+        $DOCKER_CMD load -i "$L3_TAR"
+    fi
+    if ! $L2_OK; then
+        log "Loading L2 image from $(basename "$L2_TAR")..."
+        $DOCKER_CMD load -i "$L2_TAR"
     fi
 
-    if ! $L2_OK; then
-        log "Building L2 switch image (this takes a few minutes)..."
-        cp "$L2_BIN" "$IOL_BUILD_DIR/iol_l2.bin"
-        $DOCKER_CMD build \
-            --build-arg IMAGE=iol_l2.bin \
-            -t "$IOL_L2_IMAGE" \
-            "$IOL_BUILD_DIR"
-        rm -f "$IOL_BUILD_DIR/iol_l2.bin"
-        log "L2 image built: $IOL_L2_IMAGE"
+    # Final verification
+    $DOCKER_CMD image inspect "$L3_IMAGE" &>/dev/null 2>&1 && L3_OK=true
+    $DOCKER_CMD image inspect "$L2_IMAGE" &>/dev/null 2>&1 && L2_OK=true
+
+    if $L3_OK && $L2_OK; then
+        log "Images loaded successfully."
+    else
+        error "Failed to load images from tarballs. Check for errors above."
+        exit 1
     fi
 }
 

@@ -1,1 +1,10 @@
-bin/
+# Docker image tarballs
+*.tar
+.DS_Store
+
+# IDE folders
+.vscode/
+.idea/
+
+# Local build artifacts
+.vrnetlab/

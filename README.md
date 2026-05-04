@@ -27,38 +27,37 @@ SW1  Ethernet0/2 ── PC1 eth1
   or **macOS** (with Homebrew)
 - **Windows**: Install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) and run everything inside it
 - At least 4 GB RAM free
-- At least 4 GB disk space
-- Internet access (for Docker and containerlab installation)
-- Cisco IOL binary files (see below)
+- At least 5 GB disk space (for the Docker images)
+- Internet access (for initial Docker/containerlab installation)
+- The two required Cisco IOL Docker image tarballs (see below)
 
 ---
 
-## Before You Start: IOL Binary Files
+## Before You Start: IOL Docker Images
 
-The lab uses Cisco IOL (IOS on Linux) images. These are proprietary Cisco binaries and **cannot be included** in this kit.
+The lab uses Cisco IOL (IOS on Linux) images, which are proprietary and cannot be included in this kit. For this practice lab, they are distributed as Docker images packaged into `.tar` files.
 
 You need two files:
 
 | File | Description |
 |------|-------------|
-| `bin/iol.bin` | IOS on Linux — L3 router image |
-| `bin/iol_l2.bin` | IOS on Linux — L2 switch image (filename must contain `l2`) |
+| `images/iol-l3.tar` | L3 Router Docker Image (`anc/iol-l3`) |
+| `images/iol-l2.tar` | L2 Switch Docker Image (`anc/iol-l2`) |
 
-Place them in the `bin/` folder before running setup:
+**How to get them:**
+Download `iol-l3.tar` and `iol-l2.tar` from the link provided by your lab administrator or lecturer.
+
+Place them in the `images/` folder before running setup:
 
 ```
 practice-kit/
-├── bin/
-│   ├── iol.bin        ← your L3 router image
-│   └── iol_l2.bin     ← your L2 switch image
+├── images/
+│   ├── iol-l3.tar     ← L3 router image tarball
+│   └── iol-l2.tar     ← L2 switch image tarball
 ├── configs/
 ├── setup.sh
 └── topology.clab.yml
 ```
-
-**Where to get them:** Contact your lab administrator or lecturer. Your institution may provide access through its Cisco licensing agreement.
-
-> The filenames don't have to be exactly `iol.bin` / `iol_l2.bin` — the setup script will find them automatically. The L3 image can be any `.bin` or `.image` file in `bin/` that does **not** contain `l2` or `L2` in its name. The L2 image must contain `l2` or `L2` in its filename.
 
 ---
 
@@ -68,16 +67,16 @@ practice-kit/
 bash setup.sh
 ```
 
-The script will:
-1. Detect your OS
-2. Install Docker if not present
-3. Install containerlab if not present
-4. Build the IOL Docker images from your binary files (first run only — takes a few minutes)
-5. Deploy the lab
-6. Wait for devices to come up
-7. Print connection info
+The script will automatically:
+1. Detect your OS.
+2. Install Docker if not present.
+3. Install `containerlab` if not present.
+4. Load the IOL Docker images from the `.tar` files in `images/` (first run only).
+5. Deploy the lab topology.
+6. Wait for devices to boot.
+7. Print connection info.
 
-The first time you run it, image building takes **3–5 minutes**. Subsequent runs deploy in under a minute.
+The first time you run it, loading the images might take a minute. Subsequent runs that deploy in under 30 seconds.
 
 ---
 
@@ -118,25 +117,23 @@ bash setup.sh
 
 ## Troubleshooting
 
+**`setup.sh` fails with "Docker image tarballs not found"**
+Ensure that you have downloaded `iol-l3.tar` and `iol-l2.tar` and placed them correctly inside the `images/` directory.
+
 **Docker permission denied**
-```bash
-sudo usermod -aG docker $USER
-# Then log out and back in
-```
+If you see this error when running `setup.sh`, you may need to log out and back in for the `docker` group permissions to apply to your user. Alternatively, run the script with `sudo`: `sudo bash setup.sh`.
 
 **containerlab: permission denied**
+Run containerlab commands with `sudo`, for example:
 ```bash
-sudo containerlab deploy --topo topology.clab.yml --reconfigure
+sudo containerlab destroy --topo topology.clab.yml --cleanup
 ```
 
 **RTR1/SW1 not responding to SSH after setup**
-IOL takes 60–90 seconds to fully boot. Wait a moment and try again.
+IOL can take 60–90 seconds to fully boot. The script waits for them, but if it timed out, just wait another minute and try connecting again.
 
 **PC1 SSH fails with "Connection refused"**
-The sshd startup in PC1 takes a few seconds. Retry after 10 seconds.
-
-**Images already built but setup is rebuilding them**
-The script checks for images named `vrnetlab/cisco_iol:17.16.01a` and `vrnetlab/cisco_iol:L2-17.16.01a`. If those images exist, building is skipped automatically.
+The `sshd` service inside the PC1 container takes a few seconds to start. Retry after 10 seconds.
 
 ---
 
