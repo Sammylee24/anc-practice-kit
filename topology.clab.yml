@@ -1,0 +1,41 @@
+name: anc-practice
+mgmt:
+  network: clab-mgmt-practice
+  ipv4-subnet: 172.31.31.0/24
+  ipv6-subnet: fd00:31:31::/64
+topology:
+  nodes:
+    RTR1:
+      kind: cisco_iol
+      image: vrnetlab/cisco_iol:17.16.01a
+      mgmt-ipv4: 172.31.31.11
+      binds:
+        - configs/RTR1.conf:/config.txt
+    SW1:
+      kind: cisco_iol
+      image: vrnetlab/cisco_iol:L2-17.16.01a
+      type: l2
+      mgmt-ipv4: 172.31.31.21
+      binds:
+        - configs/SW1.conf:/config.txt
+    PC1:
+      kind: linux
+      image: nicolaka/netshoot
+      mgmt-ipv4: 172.31.31.31
+      exec:
+        - "ip link set eth1 up"
+        - "apk add --no-cache openssh"
+        - "ssh-keygen -A"
+        - "sh -c 'echo PermitRootLogin yes >> /etc/ssh/sshd_config'"
+        - "sh -c 'echo PasswordAuthentication yes >> /etc/ssh/sshd_config'"
+        - "sh -c 'echo root:admin | chpasswd'"
+        - "sh -c 'adduser -D admin; echo admin:admin | chpasswd'"
+        - "/usr/sbin/sshd"
+        - "sh -c 'ip route del default dev eth0 2>/dev/null; ip route add default via 172.31.31.1 dev eth0 metric 2000'"
+  links:
+    - endpoints:
+        - RTR1:Ethernet0/1
+        - SW1:Ethernet0/1
+    - endpoints:
+        - SW1:Ethernet0/2
+        - PC1:eth1
