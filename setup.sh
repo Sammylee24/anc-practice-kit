@@ -141,60 +141,37 @@ check_images() {
     $DOCKER_CMD image inspect "$L2_IMAGE" &>/dev/null 2>&1 && L2_OK=true
 
     if $L3_OK && $L2_OK; then
-        log "IOL images found: $L3_IMAGE, $L2_IMAGE"
+        log "IOL images already present locally."
         return 0
     fi
 
-    warn "One or more IOL images are missing. Attempting to load from tarballs..."
-    load_images
+    warn "One or more IOL images not found locally. Pulling from Docker Hub..."
+    pull_images
 }
 
-load_images() {
-    L3_TAR="$SCRIPT_DIR/images/iol-l3.tar"
-    L2_TAR="$SCRIPT_DIR/images/iol-l2.tar"
+pull_images() {
+    pull_one() {
+        local img="$1"
+        log "Pulling $img ..."
+        if ! $DOCKER_CMD pull "$img"; then
+            echo ""
+            error "Failed to pull $img"
+            echo ""
+            echo "  The image repository is private. You need to log in first:"
+            echo ""
+            echo "    docker login -u adebayyo"
+            echo ""
+            echo "  Use the access token provided by your lab administrator,"
+            echo "  then re-run: bash setup.sh"
+            echo ""
+            exit 1
+        fi
+    }
 
-    if [ ! -f "$L3_TAR" ] || [ ! -f "$L2_TAR" ]; then
-        echo ""
-        error "Docker image tarballs not found in ./images/"
-        echo ""
-        echo "  This lab requires pre-built Cisco IOL Docker images."
-        echo "  These are provided as .tar files and must be downloaded separately."
-        echo ""
-        echo "  ── How to obtain them ──────────────────────────────────────────────────"
-        echo "  Download 'iol-l3.tar' and 'iol-l2.tar' from the link provided by"
-        echo "  your lab administrator or lecturer."
-        echo ""
-        echo "  Place the files in the images/ folder like this:"
-        echo ""
-        echo "    images/"
-        echo "    ├── iol-l3.tar     ← L3 router image"
-        echo "    └── iol-l2.tar     ← L2 switch image"
-        echo ""
-        echo "  Then re-run: bash setup.sh"
-        echo ""
-        exit 1
-    fi
+    $L3_OK || pull_one "$L3_IMAGE"
+    $L2_OK || pull_one "$L2_IMAGE"
 
-    log "Found image tarballs. Loading into Docker..."
-    if ! $L3_OK; then
-        log "Loading L3 image from $(basename "$L3_TAR")..."
-        $DOCKER_CMD load -i "$L3_TAR"
-    fi
-    if ! $L2_OK; then
-        log "Loading L2 image from $(basename "$L2_TAR")..."
-        $DOCKER_CMD load -i "$L2_TAR"
-    fi
-
-    # Final verification
-    $DOCKER_CMD image inspect "$L3_IMAGE" &>/dev/null 2>&1 && L3_OK=true
-    $DOCKER_CMD image inspect "$L2_IMAGE" &>/dev/null 2>&1 && L2_OK=true
-
-    if $L3_OK && $L2_OK; then
-        log "Images loaded successfully."
-    else
-        error "Failed to load images from tarballs. Check for errors above."
-        exit 1
-    fi
+    log "Images ready."
 }
 
 # ─── Deploy Lab ─────────────────────────────

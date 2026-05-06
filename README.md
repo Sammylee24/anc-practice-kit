@@ -28,36 +28,22 @@ SW1  Ethernet0/2 ── PC1 eth1
 - **Windows**: Install [WSL2](https://learn.microsoft.com/en-us/windows/wsl/install) and run everything inside it
 - At least 4 GB RAM free
 - At least 5 GB disk space (for the Docker images)
-- Internet access (for initial Docker/containerlab installation)
-- The two required Cisco IOL Docker image tarballs (see below)
+- Internet access (to pull Docker images and install containerlab)
 
 ---
 
-## Before You Start: IOL Docker Images
+## Before You Start: Docker Hub Login
 
-The lab uses Cisco IOL (IOS on Linux) images, which are proprietary and cannot be included in this kit. For this practice lab, they are distributed as Docker images packaged into `.tar` files.
+The Cisco IOL images are hosted on Docker Hub under `adebayyo/cisco_iol`. The repository is private, so you need to log in before running setup.
 
-You need two files:
+Your lab administrator will provide a read-only access token. Run:
 
-| File | Description |
-|------|-------------|
-| `images/iol-l3.tar` | L3 Router Image (`adebayyo/cisco_iol:17.16.01a`) |
-| `images/iol-l2.tar` | L2 Switch Image (`adebayyo/cisco_iol:L2-17.16.01a`) |
-
-**How to get them:**
-Download `iol-l3.tar` and `iol-l2.tar` from the link provided by your lab administrator or lecturer.
-
-Place them in the `images/` folder before running setup:
-
+```bash
+docker login -u adebayyo
+# paste the token when prompted
 ```
-practice-kit/
-├── images/
-│   ├── iol-l3.tar     ← L3 router image tarball
-│   └── iol-l2.tar     ← L2 switch image tarball
-├── configs/
-├── setup.sh
-└── topology.clab.yml
-```
+
+You only need to do this once per machine.
 
 ---
 
@@ -71,12 +57,12 @@ The script will automatically:
 1. Detect your OS.
 2. Install Docker if not present.
 3. Install `containerlab` if not present.
-4. Load the IOL Docker images from the `.tar` files in `images/` (first run only).
+4. Pull the Cisco IOL Docker images from Docker Hub (first run only).
 5. Deploy the lab topology.
 6. Wait for devices to boot.
 7. Print connection info.
 
-The first time you run it, loading the images might take a minute. Subsequent runs that deploy in under 30 seconds.
+The first run pulls ~400 MB of images — this takes a few minutes depending on your connection. Subsequent runs deploy in under 30 seconds.
 
 ---
 
@@ -117,8 +103,8 @@ bash setup.sh
 
 ## Troubleshooting
 
-**`setup.sh` fails with "Docker image tarballs not found"**
-Ensure that you have downloaded `iol-l3.tar` and `iol-l2.tar` and placed them correctly inside the `images/` directory.
+**`setup.sh` fails with "Failed to pull image"**
+You need to log into Docker Hub first. Run `docker login -u adebayyo` and paste the access token provided by your lab administrator, then re-run `bash setup.sh`.
 
 **Docker permission denied**
 If you see this error when running `setup.sh`, you may need to log out and back in for the `docker` group permissions to apply to your user. Alternatively, run the script with `sudo`: `sudo bash setup.sh`.
