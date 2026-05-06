@@ -32,25 +32,28 @@ SW1  Ethernet0/2 ── PC1 eth1
 
 ---
 
-## Before You Start: Docker Hub Login
+## Setup
 
-The Cisco IOL images are hosted on Docker Hub under `adebayyo/cisco_iol`. The repository is private, so you need to log in before running setup.
-
-Your lab administrator will provide a read-only access token. Run:
-
+**One-liner:**
 ```bash
-docker login -u adebayyo
-# paste the token when prompted
+git clone https://github.com/Sammylee24/anc-practice-kit.git && cd anc-practice-kit && chmod +x setup.sh && ./setup.sh
 ```
-
-You only need to do this once per machine.
 
 ---
 
-## Setup
-
+**Step by step:**
 ```bash
-bash setup.sh
+# 1. Clone the repo
+git clone https://github.com/Sammylee24/anc-practice-kit.git
+
+# 2. Enter the directory
+cd anc-practice-kit
+
+# 3. Make the setup script executable
+chmod +x setup.sh
+
+# 4. Run setup
+./setup.sh
 ```
 
 The script will automatically:
@@ -104,7 +107,7 @@ bash setup.sh
 ## Troubleshooting
 
 **`setup.sh` fails with "Failed to pull image"**
-You need to log into Docker Hub first. Run `docker login -u adebayyo` and paste the access token provided by your lab administrator, then re-run `bash setup.sh`.
+Check your internet connection and ensure Docker is running, then re-run `bash setup.sh`.
 
 **Docker permission denied**
 If you see this error when running `setup.sh`, you may need to log out and back in for the `docker` group permissions to apply to your user. Alternatively, run the script with `sudo`: `sudo bash setup.sh`.
