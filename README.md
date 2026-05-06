@@ -41,8 +41,8 @@ You need two files:
 
 | File | Description |
 |------|-------------|
-| `images/iol-l3.tar` | L3 Router Image (`vrnetlab/cisco_iol:17.16.01a`) |
-| `images/iol-l2.tar` | L2 Switch Image (`vrnetlab/cisco_iol:L2-17.16.01a`) |
+| `images/iol-l3.tar` | L3 Router Image (`adebayyo/cisco_iol:17.16.01a`) |
+| `images/iol-l2.tar` | L2 Switch Image (`adebayyo/cisco_iol:L2-17.16.01a`) |
 
 **How to get them:**
 Download `iol-l3.tar` and `iol-l2.tar` from the link provided by your lab administrator or lecturer.

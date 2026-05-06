@@ -7,13 +7,13 @@ topology:
   nodes:
     RTR1:
       kind: cisco_iol
-      image: vrnetlab/cisco_iol:17.16.01a
+      image: adebayyo/cisco_iol:17.16.01a
       mgmt-ipv4: 172.31.31.11
       binds:
         - configs/RTR1.conf:/config.txt
     SW1:
       kind: cisco_iol
-      image: vrnetlab/cisco_iol:L2-17.16.01a
+      image: adebayyo/cisco_iol:L2-17.16.01a
       type: l2
       mgmt-ipv4: 172.31.31.21
       binds:

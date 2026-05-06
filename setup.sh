@@ -14,8 +14,8 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 CLAB_VERSION="0.74.3"
-L3_IMAGE="vrnetlab/cisco_iol:17.16.01a"
-L2_IMAGE="vrnetlab/cisco_iol:L2-17.16.01a"
+L3_IMAGE="adebayyo/cisco_iol:17.16.01a"
+L2_IMAGE="adebayyo/cisco_iol:L2-17.16.01a"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 log()    { echo -e "${GREEN}[+]${NC} $*"; }
