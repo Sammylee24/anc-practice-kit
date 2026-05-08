@@ -150,11 +150,11 @@ check_images() {
     $DOCKER_CMD image inspect "$L2_IMAGE" &>/dev/null 2>&1 && L2_OK=true
 
     if $L3_OK && $L2_OK; then
-        log "IOL images already present locally."
+        log "IOL images already downloaded."
         return 0
     fi
 
-    warn "One or more IOL images not found locally. Pulling from Docker Hub..."
+    warn "Pulling Cisco IOL images from Docker Hub..."
     pull_images
 }
 
@@ -166,11 +166,7 @@ pull_images() {
             echo ""
             error "Failed to pull $img"
             echo ""
-            echo "  The image repository is private. You need to log in first:"
-            echo ""
-            echo "    docker login -u adebayyo"
-            echo ""
-            echo "  Use the access token provided by your lab administrator,"
+            echo "  Check your internet connection and ensure Docker is running,"
             echo "  then re-run: bash setup.sh"
             echo ""
             exit 1
