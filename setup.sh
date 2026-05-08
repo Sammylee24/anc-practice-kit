@@ -77,6 +77,15 @@ check_docker() {
 
 install_docker() {
     if [ "$OS" = "linux" ]; then
+        # Ensure curl is available before using it
+        if ! command -v curl &>/dev/null; then
+            warn "curl not found. Installing..."
+            case "$PKG" in
+                apt) sudo apt-get update -qq && sudo apt-get install -y curl ;;
+                dnf) sudo dnf install -y curl ;;
+                yum) sudo yum install -y curl ;;
+            esac
+        fi
         curl -fsSL https://get.docker.com | sudo sh
         sudo usermod -aG docker "$USER" 2>/dev/null || true
         sudo systemctl enable docker
